@@ -2,9 +2,12 @@ use crate::{
     DiagramKind, RenderDiagnostics, RenderError, RenderInput, RenderOutput, Renderer,
     RendererProfile, RuntimeVersion,
 };
+use hex;
+use sha2::{Digest, Sha256};
 use std::fs;
 use std::path::PathBuf;
 use std::process::Command;
+use tempfile::NamedTempFile;
 
 pub struct MermaidRenderer {
     pub vendor_dir: PathBuf,
@@ -13,8 +16,6 @@ pub struct MermaidRenderer {
 
 impl MermaidRenderer {
     pub fn new(version: &str) -> Self {
-        // Default to a path that works in the repository structure.
-        // In a real installed scenario, this might be configured via RenderConfig or env.
         let vendor_dir = std::env::var("KCF_VENDOR_DIR")
             .map(PathBuf::from)
             .unwrap_or_else(|_| {
@@ -22,9 +23,13 @@ impl MermaidRenderer {
                     .map(PathBuf::from)
                     .unwrap_or_else(|_| PathBuf::from("."));
 
-                // If we are in crates/katana-canvas-forge, go up to workspace root
                 if manifest_dir.ends_with("katana-canvas-forge") {
-                    manifest_dir.parent().unwrap().parent().unwrap().join("vendor")
+                    manifest_dir
+                        .parent()
+                        .unwrap()
+                        .parent()
+                        .unwrap()
+                        .join("vendor")
                 } else {
                     manifest_dir.join("vendor")
                 }
@@ -45,42 +50,61 @@ impl Renderer for MermaidRenderer {
             ));
         }
 
-        let render_js = self.vendor_dir
+        let render_js = self
+            .vendor_dir
             .join("mermaid")
             .join(&self.version)
-            .join("render.js");
+            .join("render.mjs");
 
         if !render_js.exists() {
             return Err(RenderError::Runtime(format!(
-                "render.js not found at {:?}",
+                "render.mjs not found at {:?}",
                 render_js
             )));
         }
 
-        let temp_dir = std::env::temp_dir();
-        let output_path = temp_dir.join(format!("mermaid_output_{}.svg", uuid::Uuid::new_v4()));
+        let temp_file = NamedTempFile::new()
+            .map_err(|e| RenderError::Runtime(format!("Failed to create temp file: {}", e)))?;
+        let output_path = temp_file.path();
 
-        let status = Command::new("node")
+        let output = Command::new("node")
             .arg(render_js)
             .arg(&input.source)
-            .arg(&output_path)
-            .status()
+            .arg(output_path)
+            .output()
             .map_err(|e| RenderError::Runtime(format!("Failed to execute node: {}", e)))?;
 
-        if !status.success() {
-            return Err(RenderError::Runtime("Node.js render failed".to_string()));
+        if !output.status.success() {
+            let stderr = String::from_utf8_lossy(&output.stderr);
+            let stdout = String::from_utf8_lossy(&output.stdout);
+            return Err(RenderError::Runtime(format!(
+                "Node.js render failed.\nstdout: {}\nstderr: {}",
+                stdout, stderr
+            )));
         }
 
-        let svg = fs::read_to_string(&output_path)
+        let svg = fs::read_to_string(output_path)
             .map_err(|e| RenderError::Runtime(format!("Failed to read output SVG: {}", e)))?;
 
-        let _ = fs::remove_file(output_path);
+        // Basic extraction of width, height, viewBox from SVG
+        // In a real implementation, we might use an XML parser.
+        let width = extract_attr(&svg, "width").unwrap_or(800.0);
+        let height = extract_attr(&svg, "height").unwrap_or(600.0);
+        let view_box =
+            extract_attr_str(&svg, "viewBox").unwrap_or_else(|| "0 0 800 600".to_string());
+
+        // Calculate stable cache fingerprint
+        let mut hasher = Sha256::new();
+        hasher.update(&self.version);
+        hasher.update(&input.source);
+        hasher.update(serde_json::to_string(&input.config).unwrap_or_default());
+        let cache_fingerprint = hex::encode(hasher.finalize());
 
         Ok(RenderOutput {
             svg,
-            width: 800.0,
-            height: 600.0,
-            view_box: "0 0 800 600".to_string(),
+            width,
+            height,
+            view_box,
             runtime: RuntimeVersion {
                 name: "mermaid-js".to_string(),
                 version: self.version.clone(),
@@ -94,23 +118,20 @@ impl Renderer for MermaidRenderer {
                 warnings: vec![],
                 errors: vec![],
             },
-            cache_fingerprint: "stable-fingerprint".to_string(),
+            cache_fingerprint,
         })
     }
 }
 
-// Internal mock uuid-like thing for temp files if we don't want to add dependency
-mod uuid {
-    pub struct Uuid;
-    impl Uuid {
-        pub fn new_v4() -> String {
-            std::time::SystemTime::now()
-                .duration_since(std::time::UNIX_EPOCH)
-                .unwrap()
-                .as_nanos()
-                .to_string()
-        }
-    }
+fn extract_attr(svg: &str, attr: &str) -> Option<f32> {
+    extract_attr_str(svg, attr)?.parse().ok()
+}
+
+fn extract_attr_str(svg: &str, attr: &str) -> Option<String> {
+    let pattern = format!("{}=\"", attr);
+    let start = svg.find(&pattern)? + pattern.len();
+    let end = svg[start..].find('"')?;
+    Some(svg[start..start + end].to_string())
 }
 
 #[cfg(test)]
@@ -130,5 +151,6 @@ mod tests {
         };
         let output = renderer.render(&input).unwrap();
         assert!(output.svg.contains("rendered with mermaid.js"));
+        assert!(!output.cache_fingerprint.is_empty());
     }
 }

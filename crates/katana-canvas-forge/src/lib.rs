@@ -11,6 +11,8 @@ pub mod exporter;
 pub mod mermaid;
 pub mod renderer;
 
+pub const DEFAULT_MERMAID_VERSION: &str = "11.4.0";
+
 pub use exporter::{ExportError, ExportFormat, ExportInput, ExportOutput, Exporter};
 pub use renderer::{
     DiagramKind, RenderConfig, RenderContext, RenderDiagnostics, RenderError, RenderInput,

@@ -1,7 +1,8 @@
 use clap::{Parser, Subcommand};
 use katana_canvas_forge::mermaid::MermaidRenderer;
 use katana_canvas_forge::{
-    DiagramKind, RenderConfig, RenderContext, RenderInput, RenderPolicy, Renderer,
+    DEFAULT_MERMAID_VERSION, DiagramKind, RenderConfig, RenderContext, RenderInput, RenderPolicy,
+    Renderer,
 };
 use std::fs;
 use std::path::Path;
@@ -29,13 +30,13 @@ enum MermaidAction {
         input: String,
         #[arg(long)]
         output: String,
-        #[arg(long, default_value = "11.4.0")]
+        #[arg(long, default_value = DEFAULT_MERMAID_VERSION)]
         mermaid_version: String,
     },
     ReferenceUpdate {
         #[arg(long)]
         fixtures: String,
-        #[arg(long, default_value = "11.4.0")]
+        #[arg(long, default_value = DEFAULT_MERMAID_VERSION)]
         mermaid_version: String,
     },
     Compare {
@@ -43,13 +44,13 @@ enum MermaidAction {
         fixtures: String,
         #[arg(long, default_value_t = 99.0)]
         min_score: f32,
-        #[arg(long, default_value = "11.4.0")]
+        #[arg(long, default_value = DEFAULT_MERMAID_VERSION)]
         mermaid_version: String,
     },
     Bench {
         #[arg(long)]
         fixtures: String,
-        #[arg(long, default_value = "11.4.0")]
+        #[arg(long, default_value = DEFAULT_MERMAID_VERSION)]
         mermaid_version: String,
     },
 }
@@ -72,7 +73,9 @@ fn main() -> anyhow::Result<()> {
                     policy: RenderPolicy::default(),
                     context: RenderContext::default(),
                 };
-                let render_output = renderer.render(&render_input).map_err(|e| anyhow::anyhow!(e))?;
+                let render_output = renderer
+                    .render(&render_input)
+                    .map_err(|e| anyhow::anyhow!(e))?;
                 fs::write(&output, render_output.svg)?;
                 println!("Rendered {} to {}", input, output);
             }
@@ -86,7 +89,7 @@ fn main() -> anyhow::Result<()> {
                 for entry in fs::read_dir(fixtures_path)? {
                     let entry = entry?;
                     let path = entry.path();
-                    if path.extension().map_or(false, |ext| ext == "mmd") {
+                    if path.extension().is_some_and(|ext| ext == "mmd") {
                         let source = fs::read_to_string(&path)?;
                         let render_input = RenderInput {
                             kind: DiagramKind::Mermaid,
@@ -95,8 +98,9 @@ fn main() -> anyhow::Result<()> {
                             policy: RenderPolicy::default(),
                             context: RenderContext::default(),
                         };
-                        let render_output =
-                            renderer.render(&render_input).map_err(|e| anyhow::anyhow!(e))?;
+                        let render_output = renderer
+                            .render(&render_input)
+                            .map_err(|e| anyhow::anyhow!(e))?;
                         let mut ref_path = path.clone();
                         ref_path.set_extension("svg");
                         fs::write(&ref_path, render_output.svg)?;
@@ -117,7 +121,7 @@ fn main() -> anyhow::Result<()> {
                 for entry in fs::read_dir(fixtures_path)? {
                     let entry = entry?;
                     let path = entry.path();
-                    if path.extension().map_or(false, |ext| ext == "mmd") {
+                    if path.extension().is_some_and(|ext| ext == "mmd") {
                         total_count += 1;
                         let source = fs::read_to_string(&path)?;
                         let mut ref_path = path.clone();
@@ -140,8 +144,9 @@ fn main() -> anyhow::Result<()> {
                             policy: RenderPolicy::default(),
                             context: RenderContext::default(),
                         };
-                        let render_output =
-                            renderer.render(&render_input).map_err(|e| anyhow::anyhow!(e))?;
+                        let render_output = renderer
+                            .render(&render_input)
+                            .map_err(|e| anyhow::anyhow!(e))?;
 
                         let score = calculate_score(&render_output.svg, &reference_svg);
                         if score < min_score {
@@ -157,7 +162,11 @@ fn main() -> anyhow::Result<()> {
                         }
                     }
                 }
-                println!("Result: {}/{} passed", total_count - fail_count, total_count);
+                println!(
+                    "Result: {}/{} passed",
+                    total_count - fail_count,
+                    total_count
+                );
                 if fail_count > 0 {
                     anyhow::bail!("Comparison failed for {} fixtures", fail_count);
                 }
@@ -172,7 +181,7 @@ fn main() -> anyhow::Result<()> {
                 for entry in fs::read_dir(fixtures_path)? {
                     let entry = entry?;
                     let path = entry.path();
-                    if path.extension().map_or(false, |ext| ext == "mmd") {
+                    if path.extension().is_some_and(|ext| ext == "mmd") {
                         let source = fs::read_to_string(&path)?;
                         let render_input = RenderInput {
                             kind: DiagramKind::Mermaid,
@@ -183,7 +192,9 @@ fn main() -> anyhow::Result<()> {
                         };
 
                         let start = Instant::now();
-                        let _ = renderer.render(&render_input).map_err(|e| anyhow::anyhow!(e))?;
+                        let _ = renderer
+                            .render(&render_input)
+                            .map_err(|e| anyhow::anyhow!(e))?;
                         let duration = start.elapsed();
                         println!("Bench: {:?} took {:?}", path.file_name().unwrap(), duration);
                     }
