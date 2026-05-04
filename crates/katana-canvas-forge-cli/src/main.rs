@@ -4,6 +4,7 @@ use katana_canvas_forge::{
     DEFAULT_MERMAID_VERSION, DiagramKind, RenderConfig, RenderContext, RenderInput, RenderPolicy,
     Renderer,
 };
+use levenshtein::levenshtein;
 use std::fs;
 use std::path::Path;
 use std::time::Instant;
@@ -209,8 +210,13 @@ fn calculate_score(actual: &str, expected: &str) -> f32 {
     if actual == expected {
         return 100.0;
     }
-    // Very primitive scoring for v0.1.0:
-    // If it's not exact, we give it a 0.0 or we could do something more.
-    // Given the min_score 99 requirement, they probably expect high fidelity.
-    0.0
+
+    let dist = levenshtein(actual, expected);
+    let max_len = actual.len().max(expected.len());
+
+    if max_len == 0 {
+        return 100.0;
+    }
+
+    (1.0 - (dist as f32 / max_len as f32)) * 100.0
 }

@@ -14,6 +14,7 @@ path = "src/main.rs"
 
 [dependencies]
 katana-canvas-forge = { path = "../katana-canvas-forge" }
+levenshtein = { workspace = true }
 clap = { workspace = true }
 anyhow = { workspace = true }
 tracing = { workspace = true }

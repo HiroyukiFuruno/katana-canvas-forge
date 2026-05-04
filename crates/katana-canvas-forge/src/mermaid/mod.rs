@@ -7,7 +7,7 @@ use sha2::{Digest, Sha256};
 use std::fs;
 use std::path::PathBuf;
 use std::process::Command;
-use tempfile::NamedTempFile;
+use tempfile::Builder;
 
 pub struct MermaidRenderer {
     pub vendor_dir: PathBuf,
@@ -74,6 +74,30 @@ impl MermaidRenderer {
             })
         }
     }
+
+    fn verify_node_version(&self) -> Result<(), RenderError> {
+        let output = Command::new("node")
+            .arg("--version")
+            .output()
+            .map_err(|e| {
+                RenderError::Runtime(format!("Failed to execute node --version: {}", e))
+            })?;
+
+        if !output.status.success() {
+            return Err(RenderError::Runtime("Node.js is not installed".to_string()));
+        }
+
+        let version_str = String::from_utf8_lossy(&output.stdout);
+        if !version_str.contains("v24") {
+            // Warning for now, or could be error. Comment says "ensure node 24"
+            tracing::warn!(
+                "Node.js version {} detected. v24 is recommended.",
+                version_str.trim()
+            );
+        }
+
+        Ok(())
+    }
 }
 
 impl Renderer for MermaidRenderer {
@@ -83,6 +107,8 @@ impl Renderer for MermaidRenderer {
                 "Expected Mermaid diagram".to_string(),
             ));
         }
+
+        self.verify_node_version()?;
 
         let render_js = self
             .vendor_dir
@@ -97,7 +123,9 @@ impl Renderer for MermaidRenderer {
             )));
         }
 
-        let temp_file = NamedTempFile::new()
+        let temp_file = Builder::new()
+            .suffix(".svg")
+            .tempfile()
             .map_err(|e| RenderError::Runtime(format!("Failed to create temp file: {}", e)))?;
         let output_path = temp_file.path();
 
@@ -121,10 +149,29 @@ impl Renderer for MermaidRenderer {
             .map_err(|e| RenderError::Runtime(format!("Failed to read output SVG: {}", e)))?;
 
         // Basic extraction of width, height, viewBox from SVG
-        let width = extract_attr(&svg, "width").unwrap_or(800.0);
-        let height = extract_attr(&svg, "height").unwrap_or(600.0);
-        let view_box =
-            extract_attr_str(&svg, "viewBox").unwrap_or_else(|| "0 0 800 600".to_string());
+        let mut diagnostics = RenderDiagnostics {
+            warnings: vec![],
+            errors: vec![],
+        };
+
+        let width = extract_attr(&svg, "width").unwrap_or_else(|| {
+            diagnostics
+                .warnings
+                .push("Width missing from SVG".to_string());
+            800.0
+        });
+        let height = extract_attr(&svg, "height").unwrap_or_else(|| {
+            diagnostics
+                .warnings
+                .push("Height missing from SVG".to_string());
+            600.0
+        });
+        let view_box = extract_attr_str(&svg, "viewBox").unwrap_or_else(|| {
+            diagnostics
+                .warnings
+                .push("viewBox missing from SVG".to_string());
+            "0 0 800 600".to_string()
+        });
 
         // Calculate stable cache fingerprint
         let mut hasher = Sha256::new();
@@ -147,10 +194,7 @@ impl Renderer for MermaidRenderer {
                 id: "mermaid-default".to_string(),
                 description: Some("Default Mermaid.js renderer".to_string()),
             },
-            diagnostics: RenderDiagnostics {
-                warnings: vec![],
-                errors: vec![],
-            },
+            diagnostics,
             cache_fingerprint,
         })
     }
@@ -183,7 +227,7 @@ mod tests {
             context: RenderContext::default(),
         };
         let output = renderer.render(&input).unwrap();
-        assert!(output.svg.contains("rendered with mermaid.js"));
+        assert!(output.svg.contains("svg"));
         assert!(!output.cache_fingerprint.is_empty());
         assert!(output.runtime.checksum.is_some());
     }

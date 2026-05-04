@@ -20,7 +20,7 @@ test:
 mermaid-js-update version=MERMAID_VERSION:
     @echo "Updating Mermaid.js to {{version}}..."
     mkdir -p vendor/mermaid/{{version}}
-    # curl -L https://unpkg.com/mermaid@{{version}}/dist/mermaid.min.js -o vendor/mermaid/{{version}}/mermaid.min.js
+    curl -L https://unpkg.com/mermaid@{{version}}/dist/mermaid.min.js -o vendor/mermaid/{{version}}/mermaid.min.js
     sha256sum vendor/mermaid/{{version}}/mermaid.min.js > vendor/mermaid/{{version}}/mermaid.min.js.sha256
     @echo "Updating references..."
     cargo run -p katana-canvas-forge-cli -- mermaid reference-update --fixtures {{FIXTURES_DIR}} --mermaid-version {{version}}
