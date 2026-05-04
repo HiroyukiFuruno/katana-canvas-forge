@@ -16,6 +16,8 @@ pub struct MermaidRenderer {
 
 impl MermaidRenderer {
     pub fn new(version: &str) -> Self {
+        // Default to a path that works in the repository structure.
+        // In a real installed scenario, this might be configured via RenderConfig or env.
         let vendor_dir = std::env::var("KCF_VENDOR_DIR")
             .map(PathBuf::from)
             .unwrap_or_else(|_| {
@@ -23,16 +25,21 @@ impl MermaidRenderer {
                     .map(PathBuf::from)
                     .unwrap_or_else(|_| PathBuf::from("."));
 
-                if manifest_dir.ends_with("katana-canvas-forge") {
-                    manifest_dir
-                        .parent()
-                        .unwrap()
-                        .parent()
-                        .unwrap()
-                        .join("vendor")
-                } else {
-                    manifest_dir.join("vendor")
+                // Try to find vendor directory by walking up from manifest_dir
+                let mut current = manifest_dir.as_path();
+                loop {
+                    let maybe_vendor = current.join("vendor");
+                    if maybe_vendor.exists() && maybe_vendor.is_dir() {
+                        return maybe_vendor;
+                    }
+                    if let Some(parent) = current.parent() {
+                        current = parent;
+                    } else {
+                        break;
+                    }
                 }
+                // Fallback to current dir's vendor
+                PathBuf::from("vendor")
             });
 
         Self {
@@ -87,11 +94,9 @@ impl Renderer for MermaidRenderer {
             .map_err(|e| RenderError::Runtime(format!("Failed to read output SVG: {}", e)))?;
 
         // Basic extraction of width, height, viewBox from SVG
-        // In a real implementation, we might use an XML parser.
         let width = extract_attr(&svg, "width").unwrap_or(800.0);
         let height = extract_attr(&svg, "height").unwrap_or(600.0);
-        let view_box =
-            extract_attr_str(&svg, "viewBox").unwrap_or_else(|| "0 0 800 600".to_string());
+        let view_box = extract_attr_str(&svg, "viewBox").unwrap_or_else(|| "0 0 800 600".to_string());
 
         // Calculate stable cache fingerprint
         let mut hasher = Sha256::new();

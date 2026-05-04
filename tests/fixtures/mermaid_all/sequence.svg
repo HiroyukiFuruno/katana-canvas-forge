@@ -1,3 +1,3 @@
-<!-- rendered with mermaid.js -->
-<svg>sequenceDiagram; Alice->>Bob: Hello
-</svg>
+<svg width="800" height="600" viewBox="0 0 800 600"><!-- rendered with mermaid.js -->
+<g>sequenceDiagram; Alice->>Bob: Hello
+</g></svg>
