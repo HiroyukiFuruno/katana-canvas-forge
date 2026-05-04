@@ -30,17 +30,13 @@ impl MermaidRenderer {
                 }
 
                 for start_path in search_paths {
-                    let mut current = start_path.as_path();
-                    loop {
-                        let maybe_vendor = current.join("vendor");
+                    let mut current = Some(start_path.as_path());
+                    while let Some(path) = current {
+                        let maybe_vendor = path.join("vendor");
                         if maybe_vendor.exists() && maybe_vendor.is_dir() {
                             return maybe_vendor;
                         }
-                        if let Some(parent) = current.parent() {
-                            current = parent;
-                        } else {
-                            break;
-                        }
+                        current = path.parent();
                     }
                 }
 
@@ -50,6 +46,32 @@ impl MermaidRenderer {
         Self {
             vendor_dir,
             version: version.to_string(),
+        }
+    }
+
+    fn get_checksum(&self) -> Option<String> {
+        let sha256_path = self
+            .vendor_dir
+            .join("mermaid")
+            .join(&self.version)
+            .join("mermaid.min.js.sha256");
+
+        if sha256_path.exists() {
+            fs::read_to_string(sha256_path)
+                .ok()
+                .map(|s| s.split_whitespace().next().unwrap_or("").to_string())
+        } else {
+            // Fallback: compute it
+            let js_path = self
+                .vendor_dir
+                .join("mermaid")
+                .join(&self.version)
+                .join("mermaid.min.js");
+            fs::read(js_path).ok().map(|content| {
+                let mut hasher = Sha256::new();
+                hasher.update(content);
+                hex::encode(hasher.finalize())
+            })
         }
     }
 }
@@ -119,7 +141,7 @@ impl Renderer for MermaidRenderer {
             runtime: RuntimeVersion {
                 name: "mermaid-js".to_string(),
                 version: self.version.clone(),
-                checksum: Some("pinned-checksum".to_string()),
+                checksum: self.get_checksum(),
             },
             profile: RendererProfile {
                 id: "mermaid-default".to_string(),
@@ -163,5 +185,6 @@ mod tests {
         let output = renderer.render(&input).unwrap();
         assert!(output.svg.contains("rendered with mermaid.js"));
         assert!(!output.cache_fingerprint.is_empty());
+        assert!(output.runtime.checksum.is_some());
     }
 }
