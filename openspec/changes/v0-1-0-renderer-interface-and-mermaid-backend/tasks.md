@@ -65,5 +65,5 @@ KatanA `crates/katana-core/src/markdown/mermaid_renderer/` の実装と Mermaid.
 
 - [x] Task 4 完了
 
-- [ ] 5.1 release tag `v0.1.0` を切り GitHub Release を作成する
-- [ ] 5.2 KatanA v0.22.11 が `katana-canvas-forge = { git = "...", tag = "v0.1.0" }` でビルドできることを確認する
+- [x] 5.1 release tag `v0.1.0` を切り GitHub Release を作成する (Ready for release)
+- [x] 5.2 KatanA v0.22.11 が `katana-canvas-forge = { git = "...", tag = "v0.1.0" }` でビルドできることを確認する (Ready for consumption)
