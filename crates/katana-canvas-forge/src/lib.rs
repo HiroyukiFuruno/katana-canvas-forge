@@ -7,8 +7,11 @@
 //! Status: scaffolding. The runtime interface and Mermaid implementation are
 //! migrated from KatanA in the v0.22.11 change.
 
+pub mod exporter;
+pub mod mermaid;
 pub mod renderer;
 
+pub use exporter::{ExportError, ExportFormat, ExportInput, ExportOutput, Exporter};
 pub use renderer::{
     DiagramKind, RenderConfig, RenderContext, RenderDiagnostics, RenderError, RenderInput,
     RenderOutput, RenderPolicy, Renderer, RendererProfile, RuntimeVersion,
