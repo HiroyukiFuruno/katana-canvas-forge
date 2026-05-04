@@ -10,7 +10,11 @@ const output = process.argv[3];
 
 async function run() {
     const tempMmd = output + ".mmd";
+    const puppeteerConfig = output + ".puppeteer.json";
     fs.writeFileSync(tempMmd, source);
+    fs.writeFileSync(puppeteerConfig, JSON.stringify({
+        args: ["--no-sandbox", "--disable-setuid-sandbox"]
+    }));
 
     try {
         // Search for node_modules upward
@@ -36,14 +40,16 @@ async function run() {
             throw new Error("mmdc not found in node_modules");
         }
 
-        // Avoid -p /dev/null if it causes JSON parse error in some environments
-        execSync(`${mmdcPath} -i ${tempMmd} -o ${output}`, { stdio: 'inherit' });
+        execSync(`${mmdcPath} -p ${puppeteerConfig} -i ${tempMmd} -o ${output}`, { stdio: 'inherit' });
     } catch (err) {
         console.error("Mermaid render error:", err);
         process.exit(1);
     } finally {
         if (fs.existsSync(tempMmd)) {
             fs.unlinkSync(tempMmd);
+        }
+        if (fs.existsSync(puppeteerConfig)) {
+            fs.unlinkSync(puppeteerConfig);
         }
     }
 }
