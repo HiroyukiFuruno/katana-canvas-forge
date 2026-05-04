@@ -16,30 +16,35 @@ pub struct MermaidRenderer {
 
 impl MermaidRenderer {
     pub fn new(version: &str) -> Self {
-        // Default to a path that works in the repository structure.
-        // In a real installed scenario, this might be configured via RenderConfig or env.
+        // Find the vendor directory by checking common locations.
         let vendor_dir = std::env::var("KCF_VENDOR_DIR")
             .map(PathBuf::from)
             .unwrap_or_else(|_| {
-                let manifest_dir = std::env::var("CARGO_MANIFEST_DIR")
-                    .map(PathBuf::from)
-                    .unwrap_or_else(|_| PathBuf::from("."));
+                let mut search_paths = Vec::new();
 
-                // Try to find vendor directory by walking up from manifest_dir
-                let mut current = manifest_dir.as_path();
-                loop {
-                    let maybe_vendor = current.join("vendor");
-                    if maybe_vendor.exists() && maybe_vendor.is_dir() {
-                        return maybe_vendor;
-                    }
-                    if let Some(parent) = current.parent() {
-                        current = parent;
-                    } else {
-                        break;
+                if let Ok(manifest_dir) = std::env::var("CARGO_MANIFEST_DIR") {
+                    search_paths.push(PathBuf::from(manifest_dir));
+                }
+                if let Ok(cwd) = std::env::current_dir() {
+                    search_paths.push(cwd);
+                }
+
+                for start_path in search_paths {
+                    let mut current = start_path.as_path();
+                    loop {
+                        let maybe_vendor = current.join("vendor");
+                        if maybe_vendor.exists() && maybe_vendor.is_dir() {
+                            return maybe_vendor;
+                        }
+                        if let Some(parent) = current.parent() {
+                            current = parent;
+                        } else {
+                            break;
+                        }
                     }
                 }
-                // Fallback to current dir's vendor
-                PathBuf::from("vendor")
+
+                PathBuf::from("vendor") // Fallback
             });
 
         Self {
@@ -96,7 +101,8 @@ impl Renderer for MermaidRenderer {
         // Basic extraction of width, height, viewBox from SVG
         let width = extract_attr(&svg, "width").unwrap_or(800.0);
         let height = extract_attr(&svg, "height").unwrap_or(600.0);
-        let view_box = extract_attr_str(&svg, "viewBox").unwrap_or_else(|| "0 0 800 600".to_string());
+        let view_box =
+            extract_attr_str(&svg, "viewBox").unwrap_or_else(|| "0 0 800 600".to_string());
 
         // Calculate stable cache fingerprint
         let mut hasher = Sha256::new();
