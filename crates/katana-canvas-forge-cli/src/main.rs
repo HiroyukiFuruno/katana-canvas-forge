@@ -5,6 +5,7 @@ use katana_canvas_forge::{
 };
 use std::fs;
 use std::path::Path;
+use std::time::Instant;
 
 #[derive(Parser)]
 #[command(name = "kcf", version, about = "katana-canvas-forge CLI")]
@@ -71,41 +72,134 @@ fn main() -> anyhow::Result<()> {
                     policy: RenderPolicy::default(),
                     context: RenderContext::default(),
                 };
-                let render_output = renderer
-                    .render(&render_input)
-                    .map_err(|e| anyhow::anyhow!(e))?;
+                let render_output = renderer.render(&render_input).map_err(|e| anyhow::anyhow!(e))?;
                 fs::write(&output, render_output.svg)?;
-                println!("Rendered {input} to {output}");
+                println!("Rendered {} to {}", input, output);
             }
             MermaidAction::ReferenceUpdate {
                 fixtures,
                 mermaid_version,
             } => {
                 let fixtures_path = Path::new(&fixtures);
-                if !fixtures_path.exists() {
-                    anyhow::bail!("Fixtures directory not found: {fixtures}");
+                let renderer = MermaidRenderer::new(&mermaid_version);
+
+                for entry in fs::read_dir(fixtures_path)? {
+                    let entry = entry?;
+                    let path = entry.path();
+                    if path.extension().map_or(false, |ext| ext == "mmd") {
+                        let source = fs::read_to_string(&path)?;
+                        let render_input = RenderInput {
+                            kind: DiagramKind::Mermaid,
+                            source,
+                            config: RenderConfig::default(),
+                            policy: RenderPolicy::default(),
+                            context: RenderContext::default(),
+                        };
+                        let render_output =
+                            renderer.render(&render_input).map_err(|e| anyhow::anyhow!(e))?;
+                        let mut ref_path = path.clone();
+                        ref_path.set_extension("svg");
+                        fs::write(&ref_path, render_output.svg)?;
+                        println!("Updated reference for {:?}", path.file_name().unwrap());
+                    }
                 }
-                println!("Updating references in {fixtures} using Mermaid {mermaid_version}...");
-                // Placeholder for actual logic
             }
             MermaidAction::Compare {
                 fixtures,
                 min_score,
                 mermaid_version,
             } => {
-                println!(
-                    "Comparing fixtures in {fixtures} (min-score={min_score}) using Mermaid {mermaid_version}..."
-                );
-                // Placeholder for actual logic
+                let fixtures_path = Path::new(&fixtures);
+                let renderer = MermaidRenderer::new(&mermaid_version);
+                let mut total_count = 0;
+                let mut fail_count = 0;
+
+                for entry in fs::read_dir(fixtures_path)? {
+                    let entry = entry?;
+                    let path = entry.path();
+                    if path.extension().map_or(false, |ext| ext == "mmd") {
+                        total_count += 1;
+                        let source = fs::read_to_string(&path)?;
+                        let mut ref_path = path.clone();
+                        ref_path.set_extension("svg");
+
+                        if !ref_path.exists() {
+                            println!(
+                                "FAIL: Reference not found for {:?}",
+                                path.file_name().unwrap()
+                            );
+                            fail_count += 1;
+                            continue;
+                        }
+
+                        let reference_svg = fs::read_to_string(&ref_path)?;
+                        let render_input = RenderInput {
+                            kind: DiagramKind::Mermaid,
+                            source,
+                            config: RenderConfig::default(),
+                            policy: RenderPolicy::default(),
+                            context: RenderContext::default(),
+                        };
+                        let render_output =
+                            renderer.render(&render_input).map_err(|e| anyhow::anyhow!(e))?;
+
+                        let score = calculate_score(&render_output.svg, &reference_svg);
+                        if score < min_score {
+                            println!(
+                                "FAIL: {:?} score {:.2} (min {:.2})",
+                                path.file_name().unwrap(),
+                                score,
+                                min_score
+                            );
+                            fail_count += 1;
+                        } else {
+                            println!("PASS: {:?} score {:.2}", path.file_name().unwrap(), score);
+                        }
+                    }
+                }
+                println!("Result: {}/{} passed", total_count - fail_count, total_count);
+                if fail_count > 0 {
+                    anyhow::bail!("Comparison failed for {} fixtures", fail_count);
+                }
             }
             MermaidAction::Bench {
                 fixtures,
                 mermaid_version,
             } => {
-                println!("Benchmarking fixtures in {fixtures} using Mermaid {mermaid_version}...");
-                // Placeholder for actual logic
+                let fixtures_path = Path::new(&fixtures);
+                let renderer = MermaidRenderer::new(&mermaid_version);
+
+                for entry in fs::read_dir(fixtures_path)? {
+                    let entry = entry?;
+                    let path = entry.path();
+                    if path.extension().map_or(false, |ext| ext == "mmd") {
+                        let source = fs::read_to_string(&path)?;
+                        let render_input = RenderInput {
+                            kind: DiagramKind::Mermaid,
+                            source,
+                            config: RenderConfig::default(),
+                            policy: RenderPolicy::default(),
+                            context: RenderContext::default(),
+                        };
+
+                        let start = Instant::now();
+                        let _ = renderer.render(&render_input).map_err(|e| anyhow::anyhow!(e))?;
+                        let duration = start.elapsed();
+                        println!("Bench: {:?} took {:?}", path.file_name().unwrap(), duration);
+                    }
+                }
             }
         },
     }
     Ok(())
+}
+
+fn calculate_score(actual: &str, expected: &str) -> f32 {
+    if actual == expected {
+        return 100.0;
+    }
+    // Very primitive scoring for v0.1.0:
+    // If it's not exact, we give it a 0.0 or we could do something more.
+    // Given the min_score 99 requirement, they probably expect high fidelity.
+    0.0
 }

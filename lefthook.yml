@@ -1,0 +1,10 @@
+pre-commit:
+  commands:
+    fmt:
+      run: cargo fmt --all -- --check
+    clippy:
+      run: cargo clippy --workspace --all-targets -- -D warnings
+    test:
+      run: cargo test --workspace
+    mermaid-compare:
+      run: cargo run -p katana-canvas-forge-cli -- mermaid compare --fixtures tests/fixtures/mermaid_all --min-score 100

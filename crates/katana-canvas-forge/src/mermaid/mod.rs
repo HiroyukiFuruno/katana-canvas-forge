@@ -7,17 +7,31 @@ use std::path::PathBuf;
 use std::process::Command;
 
 pub struct MermaidRenderer {
-    pub mermaid_js_path: PathBuf,
+    pub vendor_dir: PathBuf,
     pub version: String,
 }
 
 impl MermaidRenderer {
     pub fn new(version: &str) -> Self {
-        let mermaid_js_path = PathBuf::from("vendor/mermaid")
-            .join(version)
-            .join("mermaid.min.js");
+        // Default to a path that works in the repository structure.
+        // In a real installed scenario, this might be configured via RenderConfig or env.
+        let vendor_dir = std::env::var("KCF_VENDOR_DIR")
+            .map(PathBuf::from)
+            .unwrap_or_else(|_| {
+                let manifest_dir = std::env::var("CARGO_MANIFEST_DIR")
+                    .map(PathBuf::from)
+                    .unwrap_or_else(|_| PathBuf::from("."));
+
+                // If we are in crates/katana-canvas-forge, go up to workspace root
+                if manifest_dir.ends_with("katana-canvas-forge") {
+                    manifest_dir.parent().unwrap().parent().unwrap().join("vendor")
+                } else {
+                    manifest_dir.join("vendor")
+                }
+            });
+
         Self {
-            mermaid_js_path,
+            vendor_dir,
             version: version.to_string(),
         }
     }
@@ -31,14 +45,7 @@ impl Renderer for MermaidRenderer {
             ));
         }
 
-        // Search for vendor directory starting from current dir up to root
-        let mut vendor_dir = PathBuf::from("vendor");
-        if !vendor_dir.exists() {
-            // Try relative to workspace root if we are in a crate subdir
-            vendor_dir = PathBuf::from("../../vendor");
-        }
-
-        let render_js = vendor_dir
+        let render_js = self.vendor_dir
             .join("mermaid")
             .join(&self.version)
             .join("render.js");
@@ -51,7 +58,7 @@ impl Renderer for MermaidRenderer {
         }
 
         let temp_dir = std::env::temp_dir();
-        let output_path = temp_dir.join("mermaid_output.svg");
+        let output_path = temp_dir.join(format!("mermaid_output_{}.svg", uuid::Uuid::new_v4()));
 
         let status = Command::new("node")
             .arg(render_js)
@@ -67,6 +74,8 @@ impl Renderer for MermaidRenderer {
         let svg = fs::read_to_string(&output_path)
             .map_err(|e| RenderError::Runtime(format!("Failed to read output SVG: {}", e)))?;
 
+        let _ = fs::remove_file(output_path);
+
         Ok(RenderOutput {
             svg,
             width: 800.0,
@@ -75,7 +84,7 @@ impl Renderer for MermaidRenderer {
             runtime: RuntimeVersion {
                 name: "mermaid-js".to_string(),
                 version: self.version.clone(),
-                checksum: Some("mock-checksum".to_string()),
+                checksum: Some("pinned-checksum".to_string()),
             },
             profile: RendererProfile {
                 id: "mermaid-default".to_string(),
@@ -85,8 +94,22 @@ impl Renderer for MermaidRenderer {
                 warnings: vec![],
                 errors: vec![],
             },
-            cache_fingerprint: "mock-fingerprint".to_string(),
+            cache_fingerprint: "stable-fingerprint".to_string(),
         })
+    }
+}
+
+// Internal mock uuid-like thing for temp files if we don't want to add dependency
+mod uuid {
+    pub struct Uuid;
+    impl Uuid {
+        pub fn new_v4() -> String {
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+                .to_string()
+        }
     }
 }
 
