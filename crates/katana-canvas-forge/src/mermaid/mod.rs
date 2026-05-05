@@ -2,7 +2,6 @@ use crate::{
     DiagramKind, RenderDiagnostics, RenderError, RenderInput, RenderOutput, Renderer,
     RendererProfile, RuntimeVersion,
 };
-use hex;
 use sha2::{Digest, Sha256};
 use std::fs;
 use std::path::PathBuf;
@@ -88,10 +87,10 @@ impl MermaidRenderer {
         }
 
         let version_str = String::from_utf8_lossy(&output.stdout);
-        if !version_str.contains("v24") {
-            // Warning for now, or could be error. Comment says "ensure node 24"
+        // Explicitly check for v24. prefix
+        if !version_str.trim().starts_with("v24.") {
             tracing::warn!(
-                "Node.js version {} detected. v24 is recommended.",
+                "Node.js version {} detected. v24.x is recommended for stability.",
                 version_str.trim()
             );
         }
@@ -158,19 +157,19 @@ impl Renderer for MermaidRenderer {
             diagnostics
                 .warnings
                 .push("Width missing from SVG".to_string());
-            800.0
+            0.0
         });
         let height = extract_attr(&svg, "height").unwrap_or_else(|| {
             diagnostics
                 .warnings
                 .push("Height missing from SVG".to_string());
-            600.0
+            0.0
         });
         let view_box = extract_attr_str(&svg, "viewBox").unwrap_or_else(|| {
             diagnostics
                 .warnings
                 .push("viewBox missing from SVG".to_string());
-            "0 0 800 600".to_string()
+            "".to_string()
         });
 
         // Calculate stable cache fingerprint

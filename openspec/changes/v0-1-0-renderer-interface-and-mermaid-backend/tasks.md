@@ -28,7 +28,7 @@ KatanA `crates/katana-core/src/markdown/mermaid_renderer/` の実装と Mermaid.
 
 - [x] 2.1 KatanA から移管した Mermaid 描画実装を `crates/katana-canvas-forge/src/mermaid/` に本実装する
 - [x] 2.2 `vendor/mermaid/<version>/mermaid.min.js` + `.sha256` で Mermaid.js を版固定管理する
-- [x] 2.3 `just VERSION=<version> mermaid-js-update` 相当を kcf 内で完結させる（版更新・checksum・比較画像一括更新）
+- [x] 2.3 `just VERSION=<version> mermaid-js-update` 相当を kcf 内内で完結させる（版更新・checksum・比較画像一括更新）
 - [x] 2.4 `tests/fixtures/mermaid_all/` として fixture を管理する
 - [x] 2.5 Mermaid backend の unit test を追加する
 
@@ -65,5 +65,5 @@ KatanA `crates/katana-core/src/markdown/mermaid_renderer/` の実装と Mermaid.
 
 - [x] Task 4 完了
 
-- [x] 5.1 release tag `v0.1.0` を切り GitHub Release を作成する (Ready for release)
-- [x] 5.2 KatanA v0.22.11 が `katana-canvas-forge = { git = "...", tag = "v0.1.0" }` でビルドできることを確認する (Ready for consumption)
+- [ ] 5.1 release tag `v0.1.0` を切り GitHub Release を作成する (PRマージ後に実施)
+- [ ] 5.2 KatanA v0.22.11 が `katana-canvas-forge = { git = "...", tag = "v0.1.0" }` でビルドできることを確認する (PRマージ後に実施)

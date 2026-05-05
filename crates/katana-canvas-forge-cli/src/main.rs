@@ -207,16 +207,58 @@ fn main() -> anyhow::Result<()> {
 }
 
 fn calculate_score(actual: &str, expected: &str) -> f32 {
-    if actual == expected {
+    let actual_norm = normalize_svg(actual);
+    let expected_norm = normalize_svg(expected);
+
+    if actual_norm == expected_norm {
         return 100.0;
     }
 
-    let dist = levenshtein(actual, expected);
-    let max_len = actual.len().max(expected.len());
+    let dist = levenshtein(&actual_norm, &expected_norm);
+    let max_len = actual_norm.len().max(expected_norm.len());
 
     if max_len == 0 {
         return 100.0;
     }
 
     (1.0 - (dist as f32 / max_len as f32)) * 100.0
+}
+
+fn normalize_svg(svg: &str) -> String {
+    // Basic normalization: remove non-deterministic IDs and timestamps if any
+    // For now, just collapse whitespace and remove comments
+    let mut normalized = String::new();
+    let mut in_comment = false;
+    let chars: Vec<char> = svg.chars().collect();
+    let mut i = 0;
+    while i < chars.len() {
+        if !in_comment
+            && i + 3 < chars.len()
+            && chars[i] == '<'
+            && chars[i + 1] == '!'
+            && chars[i + 2] == '-'
+            && chars[i + 3] == '-'
+        {
+            in_comment = true;
+            i += 4;
+            continue;
+        }
+        if in_comment
+            && i + 2 < chars.len()
+            && chars[i] == '-'
+            && chars[i + 1] == '-'
+            && chars[i + 2] == '>'
+        {
+            in_comment = false;
+            i += 3;
+            continue;
+        }
+        if !in_comment {
+            normalized.push(chars[i]);
+        }
+        i += 1;
+    }
+
+    // Collapse whitespace
+    normalized.split_whitespace().collect::<Vec<_>>().join(" ")
 }
