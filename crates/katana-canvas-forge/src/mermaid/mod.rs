@@ -153,24 +153,44 @@ impl Renderer for MermaidRenderer {
             errors: vec![],
         };
 
-        let width = extract_attr(&svg, "width").unwrap_or_else(|| {
-            diagnostics
-                .warnings
-                .push("Width missing from SVG".to_string());
-            0.0
-        });
-        let height = extract_attr(&svg, "height").unwrap_or_else(|| {
-            diagnostics
-                .warnings
-                .push("Height missing from SVG".to_string());
-            0.0
-        });
         let view_box = extract_attr_str(&svg, "viewBox").unwrap_or_else(|| {
             diagnostics
                 .warnings
                 .push("viewBox missing from SVG".to_string());
             "".to_string()
         });
+
+        let mut width = 0.0;
+        let mut height = 0.0;
+
+        if !view_box.is_empty() {
+            let parts: Vec<&str> = view_box.split_whitespace().collect();
+            if parts.len() == 4 {
+                width = parts[2].parse().unwrap_or(0.0);
+                height = parts[3].parse().unwrap_or(0.0);
+            }
+        }
+
+        if width == 0.0 {
+            width = extract_attr(&svg, "width").unwrap_or_else(|| {
+                if view_box.is_empty() {
+                    diagnostics
+                        .warnings
+                        .push("Width missing from SVG".to_string());
+                }
+                0.0
+            });
+        }
+        if height == 0.0 {
+            height = extract_attr(&svg, "height").unwrap_or_else(|| {
+                if view_box.is_empty() {
+                    diagnostics
+                        .warnings
+                        .push("Height missing from SVG".to_string());
+                }
+                0.0
+            });
+        }
 
         // Calculate stable cache fingerprint
         let mut hasher = Sha256::new();
@@ -204,10 +224,15 @@ fn extract_attr(svg: &str, attr: &str) -> Option<f32> {
 }
 
 fn extract_attr_str(svg: &str, attr: &str) -> Option<String> {
+    // Limit scan to root <svg> element to avoid picking up attributes from child elements
+    let svg_start = svg.find("<svg")?;
+    let svg_end = svg[svg_start..].find('>')?;
+    let root_tag = &svg[svg_start..svg_start + svg_end];
+
     let pattern = format!("{}=\"", attr);
-    let start = svg.find(&pattern)? + pattern.len();
-    let end = svg[start..].find('"')?;
-    Some(svg[start..start + end].to_string())
+    let start = root_tag.find(&pattern)? + pattern.len();
+    let end = root_tag[start..].find('"')?;
+    Some(root_tag[start..start + end].to_string())
 }
 
 #[cfg(test)]

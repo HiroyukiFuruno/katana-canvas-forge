@@ -2,7 +2,7 @@
 
 ### Requirement: Renderer trait と中立 DTO で描画契約を提供しなければならない
 
-システムは、Mermaid / Draw.io 描画と HTML / PDF / PNG / JPEG export の契約を、`Renderer` trait と中立 DTO（`RenderInput` / `RenderOutput` / `RenderConfig` / `RenderPolicy` / `RenderContext` / `RenderDiagnostics` / `RuntimeVersion` / `RendererProfile`）として提供しなければならない（MUST）。
+システムは、Mermaid / Draw.io 描画と HTML export（PDF / PNG / JPEG は次フェーズ以降）の契約を、`Renderer` trait と中立 DTO（`RenderInput` / `RenderOutput` / `RenderConfig` / `RenderPolicy` / `RenderContext` / `RenderDiagnostics` / `RuntimeVersion` / `RendererProfile`）として提供しなければならない（MUST）。
 
 #### Scenario: KatanA から Mermaid を描画する
 

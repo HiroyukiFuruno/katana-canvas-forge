@@ -30,4 +30,9 @@ jobs:
       - name: Mermaid Comparison Test
         run: just compare 99
       - name: Check for egui dependency leak
-        run: cargo tree -p katana-canvas-forge | grep egui && echo "egui found" && exit 1 || echo "no egui"
+        run: |
+          if cargo tree --workspace -e normal | grep -q egui; then
+            echo "egui found in workspace dep graph"
+            exit 1
+          fi
+          echo "no egui in workspace"

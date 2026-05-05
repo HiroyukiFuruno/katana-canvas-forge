@@ -3,7 +3,6 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
-    "@mermaid-js/mermaid-cli": "^11.4.0",
     "jsdom": "^26.0.0"
   }
 }
