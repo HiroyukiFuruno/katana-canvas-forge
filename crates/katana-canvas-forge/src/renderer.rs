@@ -88,3 +88,67 @@ pub enum RenderError {
 pub trait Renderer {
     fn render(&self, input: &RenderInput) -> Result<RenderOutput, RenderError>;
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    struct MockRenderer;
+
+    impl Renderer for MockRenderer {
+        fn render(&self, input: &RenderInput) -> Result<RenderOutput, RenderError> {
+            if input.source.is_empty() {
+                return Err(RenderError::InvalidInput("Empty source".to_string()));
+            }
+
+            Ok(RenderOutput {
+                svg: format!("<svg>{}</svg>", input.source),
+                width: 100.0,
+                height: 50.0,
+                view_box: "0 0 100 50".to_string(),
+                runtime: RuntimeVersion {
+                    name: "mock".to_string(),
+                    version: "1.0.0".to_string(),
+                    checksum: None,
+                },
+                profile: RendererProfile {
+                    id: "default".to_string(),
+                    description: None,
+                },
+                diagnostics: RenderDiagnostics {
+                    warnings: vec![],
+                    errors: vec![],
+                },
+                cache_fingerprint: "abc".to_string(),
+            })
+        }
+    }
+
+    #[test]
+    fn test_mock_renderer() {
+        let renderer = MockRenderer;
+        let input = RenderInput {
+            kind: DiagramKind::Mermaid,
+            source: "graph TD; A-->B".to_string(),
+            config: RenderConfig::default(),
+            policy: RenderPolicy::default(),
+            context: RenderContext::default(),
+        };
+        let output = renderer.render(&input).unwrap();
+        assert_eq!(output.svg, "<svg>graph TD; A-->B</svg>");
+    }
+
+    #[test]
+    fn test_mock_renderer_error() {
+        let renderer = MockRenderer;
+        let input = RenderInput {
+            kind: DiagramKind::Mermaid,
+            source: "".to_string(),
+            config: RenderConfig::default(),
+            policy: RenderPolicy::default(),
+            context: RenderContext::default(),
+        };
+        let result = renderer.render(&input);
+        assert!(matches!(result, Err(RenderError::InvalidInput(_))));
+    }
+}

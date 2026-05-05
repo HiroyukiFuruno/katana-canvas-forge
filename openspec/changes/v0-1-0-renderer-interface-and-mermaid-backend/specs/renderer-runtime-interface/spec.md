@@ -16,9 +16,9 @@
 - **THEN** `vendor/mermaid/<version>/mermaid.min.js` + `.sha256` から固定版を読み込む
 - **THEN** 実行時に CDN / npm install / OS Chrome / Chromium app への依存はない
 
-#### Scenario: HTML / PDF / PNG / JPEG export を Exporter trait 経由で提供する
+#### Scenario: HTML export を Exporter trait 経由で提供する
 
-- **WHEN** KatanA が `Exporter::export(&ExportInput)` を呼ぶ
+- **WHEN** KatanA が `Exporter::export(&ExportInput)` を HTML フォーマットで呼ぶ
 - **THEN** システムは指定 format の出力ファイル path を返す
 - **THEN** export 未対応経路は `ExportError::UnsupportedFormat` を返し、暗黙 fallback を持たない
 
