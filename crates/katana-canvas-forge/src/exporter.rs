@@ -6,8 +6,11 @@ use thiserror::Error;
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum ExportFormat {
     Html,
+    /// Planned for future release.
     Pdf,
+    /// Planned for future release.
     Png,
+    /// Planned for future release.
     Jpeg,
 }
 

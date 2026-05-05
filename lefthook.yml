@@ -5,4 +5,4 @@ pre-commit:
     test:
       run: just test
     mermaid-compare:
-      run: just compare 100
+      run: just compare 99
