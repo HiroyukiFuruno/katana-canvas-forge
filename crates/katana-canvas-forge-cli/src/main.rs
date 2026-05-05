@@ -1,8 +1,8 @@
 use clap::{Parser, Subcommand};
 use katana_canvas_forge::mermaid::MermaidRenderer;
 use katana_canvas_forge::{
-    DiagramKind, RenderConfig, RenderContext, RenderInput, RenderPolicy, Renderer,
-    DEFAULT_MERMAID_VERSION,
+    DEFAULT_MERMAID_VERSION, DiagramKind, RenderConfig, RenderContext, RenderInput, RenderPolicy,
+    Renderer,
 };
 use levenshtein::levenshtein;
 use regex::Regex;
@@ -100,8 +100,9 @@ fn main() -> anyhow::Result<()> {
                             policy: RenderPolicy::default(),
                             context: RenderContext::default(),
                         };
-                        let render_output =
-                            renderer.render(&render_input).map_err(|e| anyhow::anyhow!(e))?;
+                        let render_output = renderer
+                            .render(&render_input)
+                            .map_err(|e| anyhow::anyhow!(e))?;
                         let mut ref_path = path.clone();
                         ref_path.set_extension("svg");
                         fs::write(&ref_path, render_output.svg)?;
@@ -145,8 +146,9 @@ fn main() -> anyhow::Result<()> {
                             policy: RenderPolicy::default(),
                             context: RenderContext::default(),
                         };
-                        let render_output =
-                            renderer.render(&render_input).map_err(|e| anyhow::anyhow!(e))?;
+                        let render_output = renderer
+                            .render(&render_input)
+                            .map_err(|e| anyhow::anyhow!(e))?;
 
                         let score = calculate_score(&render_output.svg, &reference_svg);
                         if score < min_score {
@@ -162,7 +164,11 @@ fn main() -> anyhow::Result<()> {
                         }
                     }
                 }
-                println!("Result: {}/{} passed", total_count - fail_count, total_count);
+                println!(
+                    "Result: {}/{} passed",
+                    total_count - fail_count,
+                    total_count
+                );
                 if fail_count > 0 {
                     anyhow::bail!("Comparison failed for {} fixtures", fail_count);
                 }
@@ -188,7 +194,9 @@ fn main() -> anyhow::Result<()> {
                         };
 
                         let start = Instant::now();
-                        let _ = renderer.render(&render_input).map_err(|e| anyhow::anyhow!(e))?;
+                        let _ = renderer
+                            .render(&render_input)
+                            .map_err(|e| anyhow::anyhow!(e))?;
                         let duration = start.elapsed();
                         println!("Bench: {:?} took {:?}", path.file_name().unwrap(), duration);
                     }
