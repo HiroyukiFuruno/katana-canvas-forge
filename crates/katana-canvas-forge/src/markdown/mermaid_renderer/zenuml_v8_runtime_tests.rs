@@ -50,3 +50,22 @@ fn renders_zenuml_without_leading_keyword_line() {
         "{without_keyword:?}"
     );
 }
+
+#[test]
+fn read_asset_file_reports_missing_file_error() {
+    let result = super::read_asset_file(std::path::Path::new("target/kcf-tests/missing-zenuml.js"));
+    assert!(result.is_err());
+    assert!(
+        result
+            .as_ref()
+            .is_err_and(|e| e.contains("Failed to read zenuml.js:")),
+        "{result:?}"
+    );
+}
+
+#[test]
+fn build_preamble_json_encodes_source() {
+    let preamble = super::build_preamble("title \"hello\"");
+    assert!(preamble.contains("var __zenuml_source__"));
+    assert!(preamble.contains(r#"\"hello\""#));
+}

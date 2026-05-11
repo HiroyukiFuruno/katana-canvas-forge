@@ -31,7 +31,7 @@ impl ZenumlV8RenderOps {
     ) -> Result<String, String> {
         let zenuml_asset = RuntimeAsset::zenuml_core();
         let zenuml_bundle = materialize_and_read(&zenuml_asset)?;
-        let preamble = build_preamble(source)?;
+        let preamble = build_preamble(source);
         let mut scripts = dom_scripts();
         scripts.push(DiagramRuntimeScript::owned("zenuml-preamble.js", preamble));
         scripts.push(DiagramRuntimeScript::owned("zenuml.js", zenuml_bundle));
@@ -67,13 +67,16 @@ fn dom_scripts<'a>() -> Vec<DiagramRuntimeScript<'a>> {
 
 fn materialize_and_read(asset: &RuntimeAsset) -> Result<String, String> {
     let path = asset.materialize_at(asset.materialized_path())?;
+    read_asset_file(&path)
+}
+
+fn read_asset_file(path: &std::path::Path) -> Result<String, String> {
     std::fs::read_to_string(path).map_err(|e| format!("Failed to read zenuml.js: {e}"))
 }
 
-fn build_preamble(source: &str) -> Result<String, String> {
-    let source_json = serde_json::to_string(source)
-        .map_err(|e| format!("Failed to serialize zenuml source: {e}"))?;
-    Ok(format!("var __zenuml_source__ = {source_json};"))
+fn build_preamble(source: &str) -> String {
+    let source_json = serde_json::Value::String(source.to_owned()).to_string();
+    format!("var __zenuml_source__ = {source_json};")
 }
 
 #[cfg(test)]

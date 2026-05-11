@@ -36,6 +36,12 @@ fn keeps_source_when_mermaid_fence_is_not_closed() {
 }
 
 #[test]
+fn unknown_fence_language_passes_through_as_source() {
+    let source = "```javascript\nconsole.log('hi')\n```\n".to_string();
+    assert_eq!(MermaidMarkdownOps::extract(source.clone()), source);
+}
+
+#[test]
 fn drawio_source_passes_through() {
     let source = "<mxGraphModel />".to_string();
     assert_eq!(
