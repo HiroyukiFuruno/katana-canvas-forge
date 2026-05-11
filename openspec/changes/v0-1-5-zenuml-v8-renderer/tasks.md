@@ -76,8 +76,10 @@
   - `<svg>` タグを含む
   - `<foreignObject>` を含まない
   - エラーなく完了する
-- [ ] 5.2 `just mermaid-compare tmp/zenuml-spike 0 tmp/zenuml-spike-v8` を実行して
+- [x] 5.2 `just mermaid-compare tmp/zenuml-spike 0 tmp/zenuml-spike-v8` を実行して
   スコアを記録する（baseline として `tasks.md` に追記する）
+  - **baseline score: 41.63** (dark theme, fixture: `28-zen-uml.md`, 2026-05-12)
+  - V8 in-process renderer での初回スコア。DOM ポリフィル全スタック追加後に取得。
 - [ ] 5.3 `cargo test` が通ることを確認する
 - [ ] 5.4 `just lint` が通ることを確認する
 
