@@ -18,6 +18,17 @@ fn extracts_zenuml_fence_and_prepends_zenuml_keyword() {
 }
 
 #[test]
+fn extracts_zenuml_direct_fence_from_committed_fixture() {
+    let fixture =
+        include_str!("../../../tests/fixtures/mermaid/en/29-zenuml-direct.md").to_string();
+    let extracted = MermaidMarkdownOps::extract(fixture);
+    assert!(
+        extracted.starts_with("zenuml\n"),
+        "extracted source should start with 'zenuml\\n', got: {extracted:?}"
+    );
+}
+
+#[test]
 fn extracts_mermaid_fence_with_info_string_attributes() {
     let source = "``` mermaid title=\"flow\"\ngraph TD; A-->B\n```\n".to_string();
     assert_eq!(MermaidMarkdownOps::extract(source), "graph TD; A-->B");
