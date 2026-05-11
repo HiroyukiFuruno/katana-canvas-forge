@@ -9,6 +9,15 @@ fn extracts_mermaid_fence_from_markdown() {
 }
 
 #[test]
+fn extracts_zenuml_fence_and_prepends_zenuml_keyword() {
+    let source = "~~~zenuml\ntitle Flow\nA.method()\n~~~\n".to_string();
+    assert_eq!(
+        MermaidMarkdownOps::extract(source),
+        "zenuml\ntitle Flow\nA.method()"
+    );
+}
+
+#[test]
 fn extracts_mermaid_fence_with_info_string_attributes() {
     let source = "``` mermaid title=\"flow\"\ngraph TD; A-->B\n```\n".to_string();
     assert_eq!(MermaidMarkdownOps::extract(source), "graph TD; A-->B");
