@@ -96,3 +96,35 @@ fn renders_zenuml_svg_in_light_mode() {
         "{result:?}"
     );
 }
+
+#[test]
+fn dark_mode_injects_style_block_with_css_variables() {
+    let result = ZenumlV8RenderOps::render(
+        "zenuml\ntitle Dark Test\nA.method()",
+        DiagramColorPreset::dark(),
+        "dark-style-test".to_string(),
+    );
+    assert!(
+        result
+            .as_ref()
+            .is_ok_and(|svg| svg.contains("<style>") && svg.contains("--color-bg-base:#111628")),
+        "{result:?}"
+    );
+}
+
+#[test]
+fn light_mode_does_not_inject_style_block() {
+    let mut preset = DiagramColorPreset::dark().clone();
+    preset.dark_mode = false;
+    let result = ZenumlV8RenderOps::render(
+        "zenuml\ntitle No-Style Test\nA.method()",
+        &preset,
+        "no-style-test".to_string(),
+    );
+    assert!(
+        result
+            .as_ref()
+            .is_ok_and(|svg| !svg.contains("--color-bg-base:#111628")),
+        "{result:?}"
+    );
+}
