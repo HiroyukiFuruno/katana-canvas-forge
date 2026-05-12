@@ -65,7 +65,34 @@ fn read_asset_file_reports_missing_file_error() {
 
 #[test]
 fn build_preamble_json_encodes_source() {
-    let preamble = super::build_preamble("title \"hello\"");
+    let preamble = super::build_preamble("title \"hello\"", false);
     assert!(preamble.contains("var __zenuml_source__"));
     assert!(preamble.contains(r#"\"hello\""#));
+}
+
+#[test]
+fn build_preamble_sets_dark_true() {
+    let preamble = super::build_preamble("A.method()", true);
+    assert!(preamble.contains("var __zenuml_dark__ = true;"));
+}
+
+#[test]
+fn build_preamble_sets_dark_false() {
+    let preamble = super::build_preamble("A.method()", false);
+    assert!(preamble.contains("var __zenuml_dark__ = false;"));
+}
+
+#[test]
+fn renders_zenuml_svg_in_light_mode() {
+    let mut preset = DiagramColorPreset::dark().clone();
+    preset.dark_mode = false;
+    let result = ZenumlV8RenderOps::render(
+        "zenuml\ntitle Light Test\nA.method()",
+        &preset,
+        "light-test".to_string(),
+    );
+    assert!(
+        result.as_ref().is_ok_and(|svg| svg.contains("<svg")),
+        "{result:?}"
+    );
 }
