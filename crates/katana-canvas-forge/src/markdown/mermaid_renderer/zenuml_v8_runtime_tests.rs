@@ -105,10 +105,19 @@ fn dark_mode_injects_style_block_with_css_variables() {
         "dark-style-test".to_string(),
     );
     assert!(
-        result
-            .as_ref()
-            .is_ok_and(|svg| svg.contains("<style>") && svg.contains("--color-bg-base:#111628")),
+        result.as_ref().is_ok_and(|svg| {
+            svg.contains("<style>") && svg.contains(".participant-box{fill:#5964f2")
+        }),
         "{result:?}"
+    );
+    /* WHY: dark style block must appear after </defs> to win the cascade over WZ stylesheet */
+    assert!(
+        result.as_ref().is_ok_and(|svg| {
+            let defs_end = svg.find("</defs>").unwrap_or(0);
+            let style_pos = svg.rfind("<style>").unwrap_or(0);
+            style_pos > defs_end
+        }),
+        "dark style block should come after </defs>"
     );
 }
 
@@ -124,7 +133,7 @@ fn light_mode_does_not_inject_style_block() {
     assert!(
         result
             .as_ref()
-            .is_ok_and(|svg| !svg.contains("--color-bg-base:#111628")),
+            .is_ok_and(|svg| !svg.contains(".participant-box{fill:#5964f2")),
         "{result:?}"
     );
 }
