@@ -25,7 +25,7 @@
       '.frame-header-line{stroke:#cecfd2}' +
       '.frame-title{fill:#cecfd2}' +
       '.participant-box{fill:#5964f2;stroke:#cecfd2}' +
-      '.participant-label{fill:#536fff}' +
+      '.participant-label{fill:#cecfd2}' +
       '.participant-icon{color:#cecfd2}' +
       '.participant-icon [fill="currentColor"]:not([stroke]){stroke:#cecfd2}' +
       '.lifeline{stroke:#cecfd2}' +
