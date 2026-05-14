@@ -2,7 +2,7 @@
 
 責務再整理により、Office viewer renderingはKDVへ移譲する。KCFではこのchangeを実装開始しない。
 
-Word / Excel / PPTX に限定したviewerは、KME/KDV/KatanAのviewer/export境界で扱う。KCFは外部描画、runtime asset、reference scoreへ責務を絞る。
+Word / Excel / PPTX に限定したviewerは、KMM/KDV/KatanAのviewer/export境界で扱う。KCFは外部描画、runtime asset、reference scoreへ責務を絞る。
 
 ## What Changes
 

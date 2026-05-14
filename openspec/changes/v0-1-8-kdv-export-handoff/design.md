@@ -1,6 +1,6 @@
 ## Context
 
-KCFは図形描画のlibraryであり、document viewerやexport pipelineのownerではない。KME / KDV / KatanAの分離後は、KCFが担うべき範囲は Mermaid / Draw.io の外部描画、runtime asset、reference scoreである。
+KCFは図形描画のlibraryであり、document viewerやexport pipelineのownerではない。KMM / KDV / KatanAの分離後は、KCFが担うべき範囲は Mermaid / Draw.io の外部描画、runtime asset、reference scoreである。
 
 旧 export/debug 実装 branch は、利用側GUI品質ゲートを作るために export と viewer 的な機能まで含めた。しかし、その後の設計でKDVがviewer/exportを担うことになったため、KCFに同じ責務を残すと境界が崩れる。
 
