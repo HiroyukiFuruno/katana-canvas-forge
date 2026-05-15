@@ -53,6 +53,11 @@
   - 不要になった export CSS debug 計画はKCF release番号から外す
   - 旧 export/debug 論点はKDV側へ移譲する
   - KCF側は Mermaid / Draw.io rendering、runtime asset、reference score に責務を絞る
+- `v0.1.7`: v8 147 bump
+  - `katana-diagram-renderer` 0.1.0 が v8 = "=147.4.0" で publish されたため、KCF も v8 を `"=147.4.0"` に揃える
+  - 不要となった `mathjax_svg` workspace dep を削除し、V8 platform 初期化を `V8::initialize_platform` 直接呼びへ切り替える
+  - `DiagramV8Runtime` を v8 147 の `scope!` / `tc_scope!` マクロベース API に追従させる
+  - KatanA workspace で kdr と KCF が共存しても V8 ランタイムが panic しない状態を確保する
 - `v0.2.0`: KDV移譲計画へ変更
   - CSV / PDF / Office viewer renderingはKDV側へ移す
   - KCF側で必要な外部描画APIだけを残す
