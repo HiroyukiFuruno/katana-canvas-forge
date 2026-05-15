@@ -25,7 +25,6 @@ path = "src/lib.rs"
 base64 = { workspace = true }
 image = { workspace = true }
 include_dir = { workspace = true }
-mathjax_svg = { workspace = true }
 regex = { workspace = true }
 resvg = { workspace = true }
 serde = { workspace = true }
