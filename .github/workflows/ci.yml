@@ -23,7 +23,7 @@ jobs:
     outputs:
       code: ${{ steps.detect.outputs.code }}
     steps:
-      - uses: actions/checkout@v6.0.2
+      - uses: actions/checkout@v6.0.3
         with:
           fetch-depth: 0
       - name: Detect code changes
@@ -73,7 +73,7 @@ jobs:
       - name: Skip docs-only changes
         if: needs.changes.outputs.code != 'true'
         run: echo "No code changes detected; skipping lint."
-      - uses: actions/checkout@v6.0.2
+      - uses: actions/checkout@v6.0.3
         if: needs.changes.outputs.code == 'true'
       - uses: dtolnay/rust-toolchain@stable
         if: needs.changes.outputs.code == 'true'
@@ -91,7 +91,7 @@ jobs:
           key: ${{ runner.os }}-cargo-${{ github.job }}-${{ hashFiles('**/Cargo.lock', '**/Cargo.toml') }}
           restore-keys: |
             ${{ runner.os }}-cargo-
-      - uses: taiki-e/install-action@v2.77.6
+      - uses: taiki-e/install-action@v2.81.3
         if: needs.changes.outputs.code == 'true'
         with:
           tool: just
@@ -107,7 +107,7 @@ jobs:
       - name: Skip docs-only changes
         if: needs.changes.outputs.code != 'true'
         run: echo "No code changes detected; skipping ast-lint."
-      - uses: actions/checkout@v6.0.2
+      - uses: actions/checkout@v6.0.3
         if: needs.changes.outputs.code == 'true'
       - uses: dtolnay/rust-toolchain@stable
         if: needs.changes.outputs.code == 'true'
@@ -123,7 +123,7 @@ jobs:
           key: ${{ runner.os }}-cargo-${{ github.job }}-${{ hashFiles('**/Cargo.lock', '**/Cargo.toml') }}
           restore-keys: |
             ${{ runner.os }}-cargo-
-      - uses: taiki-e/install-action@v2.77.6
+      - uses: taiki-e/install-action@v2.81.3
         if: needs.changes.outputs.code == 'true'
         with:
           tool: just
@@ -137,7 +137,7 @@ jobs:
       - name: Skip docs-only changes
         if: needs.changes.outputs.code != 'true'
         run: echo "No code changes detected; skipping tests."
-      - uses: actions/checkout@v6.0.2
+      - uses: actions/checkout@v6.0.3
         if: needs.changes.outputs.code == 'true'
       - uses: dtolnay/rust-toolchain@stable
         if: needs.changes.outputs.code == 'true'
@@ -153,7 +153,7 @@ jobs:
           key: ${{ runner.os }}-cargo-${{ github.job }}-${{ hashFiles('**/Cargo.lock', '**/Cargo.toml') }}
           restore-keys: |
             ${{ runner.os }}-cargo-
-      - uses: taiki-e/install-action@v2.77.6
+      - uses: taiki-e/install-action@v2.81.3
         if: needs.changes.outputs.code == 'true'
         with:
           tool: just
@@ -167,7 +167,7 @@ jobs:
       - name: Skip docs-only changes
         if: needs.changes.outputs.code != 'true'
         run: echo "No code changes detected; skipping dependency leak check."
-      - uses: actions/checkout@v6.0.2
+      - uses: actions/checkout@v6.0.3
         if: needs.changes.outputs.code == 'true'
       - uses: dtolnay/rust-toolchain@stable
         if: needs.changes.outputs.code == 'true'
@@ -183,7 +183,7 @@ jobs:
           key: ${{ runner.os }}-cargo-${{ github.job }}-${{ hashFiles('**/Cargo.lock', '**/Cargo.toml') }}
           restore-keys: |
             ${{ runner.os }}-cargo-
-      - uses: taiki-e/install-action@v2.77.6
+      - uses: taiki-e/install-action@v2.81.3
         if: needs.changes.outputs.code == 'true'
         with:
           tool: just
@@ -197,7 +197,7 @@ jobs:
       - name: Skip docs-only changes
         if: needs.changes.outputs.code != 'true'
         run: echo "No code changes detected; skipping coverage."
-      - uses: actions/checkout@v6.0.2
+      - uses: actions/checkout@v6.0.3
         if: needs.changes.outputs.code == 'true'
       - uses: dtolnay/rust-toolchain@stable
         if: needs.changes.outputs.code == 'true'
@@ -213,11 +213,11 @@ jobs:
           key: ${{ runner.os }}-cargo-${{ github.job }}-${{ hashFiles('**/Cargo.lock', '**/Cargo.toml') }}
           restore-keys: |
             ${{ runner.os }}-cargo-
-      - uses: taiki-e/install-action@v2.77.6
+      - uses: taiki-e/install-action@v2.81.3
         if: needs.changes.outputs.code == 'true'
         with:
           tool: just
-      - uses: taiki-e/install-action@v2.77.6
+      - uses: taiki-e/install-action@v2.81.3
         if: needs.changes.outputs.code == 'true'
         with:
           tool: cargo-llvm-cov
